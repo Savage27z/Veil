@@ -13,3 +13,20 @@ decrypt the amounts.
 Built for the iExec WTF Hackathon. Deployed on **Ethereum Sepolia**. No mock
 data: real encrypted handles, real TEE compute, everywhere including tests.
 
+## Architecture
+
+```
+MockUSDC (plain ERC-20, 6 decimals, open faucet — the test token only)
+   │  wrap / unwrap (1:1)
+   ▼
+HiddenVault (cUSDC) — ERC-7984 confidential wrapper
+   │  confidentialTransferFrom (encrypted amounts, all-or-nothing TEE semantics)
+   ▼
+VEILStream — linear streams over cUSDC
+     • createStream(recipient, encryptedDeposit, proof, start, end)
+         deposit arrives as a Nox handle — plaintext never touches calldata
+         ratePerSecond = deposit / duration, derived on ciphertext in the TEE
+     • withdraw(streamId)   — vested = min(rate·elapsed, deposit), paid confidentially
+     • cancel(streamId)     — vested part to recipient, encrypted refund to sender
+```
+
