@@ -72,3 +72,16 @@ chronological order. Raw friction log, not a polished retrospective.
   could document this pattern explicitly — every streaming/vesting app will hit
   it.
 
+## Day 1 — Local Nox stack (Docker)
+
+- The Nox Hardhat plugin's local stack requires Docker. On Windows this is a
+  rougher dependency than the docs let on: our Docker Desktop install was
+  wedged by stale `AF_UNIX` socket files (`run\dockerInference`,
+  `docker-secrets-engine\engine.sock`) that Windows refuses to delete
+  (Error 1920), and the backend crash-loops instead of cleaning them up. Fix
+  was renaming the parent dirs so Docker recreates them. Not Nox's bug, but if
+  the target audience is hackathon teams, a "Troubleshooting the local stack on
+  Windows" docs section would save real hours — or better, an option to run
+  tests against the hosted Sepolia stack directly (`skipTestOverride` +
+  documented wiring) so Docker isn't a hard requirement.
+
