@@ -54,3 +54,8 @@ npx hardhat run scripts/deploy.ts --network sepolia
 cd frontend && npm install && npm run dev
 ```
 
+The Sepolia RPC is a public endpoint hardcoded in `hardhat.config.ts`; only the
+deployer key is a secret (`npx hardhat keystore set --dev SEPOLIA_PRIVATE_KEY`).
+
+After deploying, paste the printed addresses into `frontend/src/config.ts`.
+
