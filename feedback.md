@@ -217,3 +217,8 @@ several encrypted operations in one call needs a gas-limit sanity check. A
 rough "gas cost per Nox primitive" table in the docs would help teams budget
 their contract design before they hit a limit.
 
+### ACL indexing lag — decrypt right after the tx returns 403
+
+Calling `handleClient.decrypt()` immediately after the transaction that created
+the handle fails with:
+
