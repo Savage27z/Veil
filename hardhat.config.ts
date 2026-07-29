@@ -10,4 +10,10 @@ export default defineConfig({
       optimizer: { enabled: true, runs: 200 },
     },
   },
+  networks: {
+    default: {
+      type: 'edr-simulated',
+      chainType: 'op',
+    },
+  },
 });
