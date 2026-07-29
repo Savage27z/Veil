@@ -95,4 +95,19 @@ describe('VEIL — private payment streams', () => {
     assert.ok(withdrawn >= USDC(300) && withdrawn <= USDC(302), `withdrawn=${withdrawn}`);
   });
 
+  it('pays out the full deposit after the stream ends and marks it depleted', async () => {
+    const s = (await stream.read.getStream([1n])) as any[];
+    await networkHelpers.time.increaseTo(BigInt(s[3]) + 1n);
+
+    const [, recipientWallet] = await viem.getWalletClients();
+    const streamAsRecipient = await viem.getContractAt('VEILStream', stream.address, {
+      client: { wallet: recipientWallet },
+    });
+    await streamAsRecipient.write.withdraw([1n]);
+
+    const after = (await stream.read.getStream([1n])) as any[];
+    assert.equal((await nox.decrypt(after[8])).value, USDC(600));
+    assert.equal(after[5], true); // depleted
+  });
+
 });
