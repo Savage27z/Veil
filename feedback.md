@@ -116,3 +116,7 @@ chronological order. Raw friction log, not a polished retrospective.
   retries, or expose a `hardhat nox:pull` / `nox:up` task so image fetching is a
   separate, resumable step from running tests.
 
+## Day 1 — First green test run (the ACL gotcha that cost us the most time)
+
+Once the stack was up, every stream test failed with a bare, undecodable revert:
+
