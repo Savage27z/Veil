@@ -190,3 +190,18 @@ all verified by decrypting handles and asserting on cleartext.
 
 Worth recording because every Nox team deploying to Sepolia will meet it:
 
+- The production keystore prompts for its password interactively on *every*
+  read, which makes deployment impossible from any non-interactive context
+  (CI, scripted runs, an agent-driven terminal). The `--dev` keystore avoids
+  this by storing a generated password in a file beside the keystore.
+- `keystore set --dev KEY` skips the password step that `keystore set KEY`
+  includes, so the prompt sequence differs between the two modes. It's easy to
+  type a password into what is actually the *value* prompt and end up with a
+  silently-wrong secret. The failure then surfaces much later and very
+  cryptically, from deep inside the signer:
+  `invalid private key, expected hex or 32 bytes, got object`.
+  A length/format check at `set` time for known-shaped values would catch this
+  instantly.
+
+### Hosted stack: worked first try
+
