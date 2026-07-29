@@ -59,3 +59,11 @@ deployer key is a secret (`npx hardhat keystore set --dev SEPOLIA_PRIVATE_KEY`).
 
 After deploying, paste the printed addresses into `frontend/src/config.ts`.
 
+## Live deployment (Ethereum Sepolia, chainId 11155111)
+
+| Contract | Address | Source |
+| --- | --- | --- |
+| MockUSDC | `0xc0d600daeb699f468ac5b15ddf3b5171d1bb1f28` | [verified](https://eth-sepolia.blockscout.com/address/0xc0d600daeb699f468ac5b15ddf3b5171d1bb1f28#code) |
+| HiddenVault (cUSDC) | `0xfd18862b9802695376ca7fb50a58a3fff7a04db2` | [verified](https://eth-sepolia.blockscout.com/address/0xfd18862b9802695376ca7fb50a58a3fff7a04db2#code) |
+| VEILStream | `0xb8b7f8a1b422b7514cee822528f0d8aefecbaaff` | [verified](https://eth-sepolia.blockscout.com/address/0xb8b7f8a1b422b7514cee822528f0d8aefecbaaff#code) |
+
