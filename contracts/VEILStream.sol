@@ -70,4 +70,63 @@ contract VEILStream {
         token = token_;
     }
 
+    // ============ Stream lifecycle ============
+
+    /// @notice Create a stream. The deposit amount is supplied as an encrypted
+    /// handle produced client-side by the Nox JS SDK — it never appears in
+    /// calldata as plaintext. The rate is derived on ciphertext in the TEE, so
+    /// deposit and rate can never disagree.
+    /// @dev Caller must first `setOperator(address(this), until)` on the token
+    /// so this contract can pull the confidential deposit.
+    function createStream(
+        address recipient,
+        externalEuint256 encryptedDeposit,
+        bytes calldata depositProof,
+        uint40 startTime,
+        uint40 endTime
+    ) external returns (uint256 streamId) {
+        if (recipient == address(0) || recipient == msg.sender) revert InvalidRecipient();
+        if (endTime <= startTime || endTime <= block.timestamp) revert InvalidTimeRange();
+
+        euint256 requested = Nox.fromExternal(encryptedDeposit, depositProof);
+
+
+        // Pull the confidential deposit. All-or-nothing semantics: if the
+        // sender's encrypted balance is insufficient, `deposit` is encrypted 0
+        // and the stream simply vests nothing — balance adequacy is never
+        // revealed on-chain.
+        euint256 deposit = token.confidentialTransferFrom(msg.sender, address(this), requested);
+
+        euint256 rate = Nox.div(deposit, Nox.toEuint256(endTime - startTime));
+        euint256 withdrawn = Nox.toEuint256(0);
+
+        // Persist contract access and grant decryption to both parties.
+        Nox.allowThis(deposit);
+        Nox.allowThis(rate);
+        Nox.allowThis(withdrawn);
+        Nox.allow(deposit, msg.sender);
+        Nox.allow(deposit, recipient);
+        Nox.allow(rate, msg.sender);
+        Nox.allow(rate, recipient);
+        Nox.allow(withdrawn, msg.sender);
+        Nox.allow(withdrawn, recipient);
+
+        streamId = nextStreamId++;
+        _streams[streamId] = Stream({
+            sender: msg.sender,
+            recipient: recipient,
+            startTime: startTime,
+            endTime: endTime,
+            cancelled: false,
+            depleted: false,
+            deposit: deposit,
+            ratePerSecond: rate,
+            withdrawn: withdrawn
+        });
+        _sent[msg.sender].push(streamId);
+        _received[recipient].push(streamId);
+
+        emit StreamCreated(streamId, msg.sender, recipient, startTime, endTime);
+    }
+
 }
