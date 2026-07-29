@@ -33,10 +33,23 @@ export function Decrypt({
   const [text, setText] = useState(() => (reduced ? value : randHex(value.length)));
   const doneRef = useRef(false);
 
+  // `onDone` is routinely a fresh inline closure on every render of whatever
+  // renders this component. It must never sit in the effect's dependency
+  // array below: doing so tears down and restarts the whole animation on
+  // any unrelated ancestor re-render, and if those re-renders ever land
+  // faster than one animation frame apart, every scheduled frame gets
+  // cancelled before it can paint and the reveal never completes at all —
+  // this exact failure was caught live (the effect restarted 7+ times in
+  // 3 seconds with zero rendered frames). A ref sidesteps the identity
+  // check entirely: the animation's timing is driven only by real prop
+  // changes, while the callback it fires always reads as "latest".
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
   useEffect(() => {
     if (reduced) {
       setText(value);
-      onDone?.();
+      onDoneRef.current?.();
       return;
     }
 
@@ -69,14 +82,14 @@ export function Decrypt({
         setText(value);
         if (!doneRef.current) {
           doneRef.current = true;
-          onDone?.();
+          onDoneRef.current?.();
         }
       }
     };
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [value, hold, reveal, reduced, onDone]);
+  }, [value, hold, reveal, reduced]);
 
   return (
     <span className={className} aria-label={value}>
