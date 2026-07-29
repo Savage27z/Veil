@@ -23,3 +23,25 @@ export const VAULT_ABI = [
   { type: 'function', name: 'isOperator', stateMutability: 'view', inputs: [{ name: 'holder', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ type: 'bool' }] },
 ] as const;
 
+export const STREAM_ABI = [
+  { type: 'function', name: 'createStream', stateMutability: 'nonpayable', inputs: [{ name: 'recipient', type: 'address' }, { name: 'encryptedDeposit', type: 'bytes32' }, { name: 'depositProof', type: 'bytes' }, { name: 'startTime', type: 'uint40' }, { name: 'endTime', type: 'uint40' }], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'withdraw', stateMutability: 'nonpayable', inputs: [{ name: 'streamId', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'cancel', stateMutability: 'nonpayable', inputs: [{ name: 'streamId', type: 'uint256' }], outputs: [] },
+  {
+    type: 'function', name: 'getStream', stateMutability: 'view',
+    inputs: [{ name: 'streamId', type: 'uint256' }],
+    outputs: [
+      { name: 'sender', type: 'address' },
+      { name: 'recipient', type: 'address' },
+      { name: 'startTime', type: 'uint40' },
+      { name: 'endTime', type: 'uint40' },
+      { name: 'cancelled', type: 'bool' },
+      { name: 'depleted', type: 'bool' },
+      { name: 'deposit', type: 'bytes32' },
+      { name: 'ratePerSecond', type: 'bytes32' },
+      { name: 'withdrawn', type: 'bytes32' },
+    ],
+  },
+  { type: 'function', name: 'streamsSentBy', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256[]' }] },
+  { type: 'function', name: 'streamsReceivedBy', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256[]' }] },
+] as const;
