@@ -71,6 +71,29 @@ All three are source-verified on Blockscout and Sourcify. Note what the
 explorer shows for a funded `HiddenVault` holder: a `confidentialBalanceOf`
 that returns a 32-byte handle, and no amount anywhere.
 
+## Try it against the live deployment
+
+```bash
+npm run smoke:sepolia    # mint -> wrap -> encrypt -> createStream -> decrypt
+npm run demo:status      # read a live stream back and decrypt what you're allowed to
+```
+
+`smoke:sepolia` runs the whole flow against the **hosted** Nox TEE (no Docker):
+it wraps real ERC-20 into confidential cUSDC, encrypts a deposit client-side,
+opens a stream, then decrypts the deposit and the TEE-derived rate.
+
+What the explorer shows for a live stream, versus what the counterparties see:
+
+| Field | On-chain | Sender / recipient |
+| --- | --- | --- |
+| sender, recipient | visible | visible |
+| start, end | visible | visible |
+| deposit | `0x0000aa36a72301563a…` | `864 USDC` |
+| ratePerSecond | `0x0000aa36a723016d4c…` | `0.01 USDC/sec` |
+| withdrawn | `0x0000aa36a723006d8c…` | `0 USDC` |
+
+Same chain, same call, two different worlds. That contrast is the product.
+
 ## Test status
 
 `npx hardhat test` — **5 passing** against the real local Nox stack (real
