@@ -186,3 +186,7 @@ all verified by decrypting handles and asserting on cleartext.
   a genuinely nice default for hackathon teams who'd otherwise have to register
   for an Etherscan key mid-build.
 
+### Hardhat keystore friction (not Nox's fault, but it hits Nox users)
+
+Worth recording because every Nox team deploying to Sepolia will meet it:
+
