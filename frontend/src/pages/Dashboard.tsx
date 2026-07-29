@@ -42,6 +42,25 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const usdc = (v: bigint | null) => (v === null ? null : formatUnits(v, 6));
 const hasWallet = () => typeof window !== 'undefined' && !!(window as any).ethereum;
 
+/** parseUnits throws on non-decimal input ("abc", "1e5", "1.2.3") — this
+ * turns that into a result the caller can show to the user instead of an
+ * uncaught exception that silently kills the click. */
+function parseAmount(raw: string): bigint | null {
+  try {
+    const v = parseUnits(raw.trim() || '0', 6);
+    return v > 0n ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Whole minutes only, 1–525600 (one year) — rejects "", "abc", "0", "-5", "3.5". */
+function parseDurationMinutes(raw: string): number | null {
+  if (!/^\d+$/.test(raw.trim())) return null;
+  const n = Number(raw.trim());
+  return n >= 1 && n <= 525_600 ? n : null;
+}
+
 export default function Dashboard() {
   const stage = useStage(TIMING);
 
@@ -112,16 +131,25 @@ export default function Dashboard() {
   }, [walletClient]);
 
   /* ── reads ──────────────────────────────────────────── */
+  // Every handle passed in here belongs to a stream/balance this account is
+  // the sender, recipient, or owner of — so a decrypt failure right after our
+  // own transaction is virtually always the Handle Gateway's ACL indexer
+  // lagging the chain by a few seconds (see feedback.md), not a genuine
+  // authorization gap. A short bounded retry absorbs that lag instead of
+  // flashing "this isn't yours" on money the wallet just funded.
   const tryDecrypt = useCallback(
     async (handle: `0x${string}`): Promise<bigint | null> => {
       if (!handleClient || handle === ZERO_HANDLE) return null;
-      try {
-        const { value } = await handleClient.decrypt(handle);
-        return value as bigint;
-      } catch {
-        // Not authorized for this handle — which is the entire point of VEIL.
-        return null;
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        try {
+          const { value } = await handleClient.decrypt(handle);
+          return value as bigint;
+        } catch {
+          if (attempt === 4) return null;
+          await new Promise((r) => setTimeout(r, attempt * 500));
+        }
       }
+      return null;
     },
     [handleClient],
   );
@@ -207,8 +235,10 @@ export default function Dashboard() {
     );
 
   const wrap = async () => {
-    const amount = parseUnits(wrapAmount || '0', 6);
-    if (amount <= 0n) return setStatus({ kind: 'err', msg: 'Enter an amount above zero.' });
+    const amount = parseAmount(wrapAmount);
+    if (amount === null) {
+      return setStatus({ kind: 'err', msg: 'Enter a valid amount above zero.' });
+    }
     const approved = await tx('Approving', () =>
       walletClient!.writeContract({
         address: ADDRESSES.usdc, abi: USDC_ABI, functionName: 'approve',
@@ -230,8 +260,14 @@ export default function Dashboard() {
     if (!/^0x[a-fA-F0-9]{40}$/.test(recipient)) {
       return setStatus({ kind: 'err', msg: 'Enter a valid recipient address.' });
     }
-    const amount = parseUnits(streamAmount || '0', 6);
-    if (amount <= 0n) return setStatus({ kind: 'err', msg: 'Enter an amount above zero.' });
+    const amount = parseAmount(streamAmount);
+    if (amount === null) {
+      return setStatus({ kind: 'err', msg: 'Enter a valid amount above zero.' });
+    }
+    const duration = parseDurationMinutes(durationMin);
+    if (duration === null) {
+      return setStatus({ kind: 'err', msg: 'Enter a whole number of minutes (1 or more).' });
+    }
 
     const isOp = await publicClient.readContract({
       address: ADDRESSES.vault, abi: VAULT_ABI, functionName: 'isOperator',
@@ -258,7 +294,7 @@ export default function Dashboard() {
     }
 
     const start = BigInt(Math.floor(Date.now() / 1000) + 60);
-    const end = start + BigInt(Math.max(1, Number(durationMin)) * 60);
+    const end = start + BigInt(duration * 60);
     await tx('Creating stream', () =>
       walletClient!.writeContract({
         address: ADDRESSES.stream, abi: STREAM_ABI, functionName: 'createStream',
@@ -331,6 +367,7 @@ export default function Dashboard() {
                       value={wrapAmount}
                       onChange={setWrapAmount}
                       inputMode="decimal"
+                      error={wrapAmount && parseAmount(wrapAmount) === null ? 'Enter an amount above zero.' : undefined}
                     />
                     <button onClick={wrap} className="btn-primary w-full">
                       Wrap into cUSDC
@@ -359,6 +396,7 @@ export default function Dashboard() {
                         value={streamAmount}
                         onChange={setStreamAmount}
                         inputMode="decimal"
+                        error={streamAmount && parseAmount(streamAmount) === null ? 'Above zero.' : undefined}
                       />
                       <Field
                         id="duration"
@@ -367,6 +405,7 @@ export default function Dashboard() {
                         value={durationMin}
                         onChange={setDurationMin}
                         inputMode="numeric"
+                        error={durationMin && parseDurationMinutes(durationMin) === null ? 'Whole minutes.' : undefined}
                       />
                     </div>
                     <button onClick={createStream} className="btn-primary w-full">
