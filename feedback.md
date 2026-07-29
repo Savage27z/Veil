@@ -232,3 +232,17 @@ Unexpected response from Handle Gateway (status: 403,
 every time. The gateway authorizes against indexed ACL state, which lags the
 chain by a few seconds.
 
+Two suggestions:
+
+1. **The error message is actively misleading.** "Access denied: not a viewer"
+   reads as a permanent authorization bug — the kind of thing that sends you
+   back to re-audit every `allow`/`addViewer` call in your contract (we did
+   exactly that). A distinct, retryable signal for "ACL not yet indexed" versus
+   "you genuinely lack permission" would save that dead end. The SDK already
+   has a `NotYetComputedHandleError`; this deserves the same treatment.
+2. **The SDK could retry internally**, the way the Hardhat plugin's
+   `nox.decrypt` already does via `waitForHandlesResolved`. That helper exists
+   in the plugin but not in `@iexec-nox/handle` itself, so anyone calling the
+   SDK directly — i.e. every frontend — has to rediscover this and write their
+   own backoff. Ours is in `scripts/demo-status.ts`.
+
