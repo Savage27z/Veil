@@ -67,3 +67,9 @@ After deploying, paste the printed addresses into `frontend/src/config.ts`.
 | HiddenVault (cUSDC) | `0xfd18862b9802695376ca7fb50a58a3fff7a04db2` | [verified](https://eth-sepolia.blockscout.com/address/0xfd18862b9802695376ca7fb50a58a3fff7a04db2#code) |
 | VEILStream | `0xb8b7f8a1b422b7514cee822528f0d8aefecbaaff` | [verified](https://eth-sepolia.blockscout.com/address/0xb8b7f8a1b422b7514cee822528f0d8aefecbaaff#code) |
 
+All three are source-verified on Blockscout and Sourcify. Note what the
+explorer shows for a funded `HiddenVault` holder: a `confidentialBalanceOf`
+that returns a 32-byte handle, and no amount anywhere.
+
+## Test status
+
