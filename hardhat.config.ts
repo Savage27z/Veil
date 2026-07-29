@@ -15,5 +15,11 @@ export default defineConfig({
       type: 'edr-simulated',
       chainType: 'op',
     },
+    sepolia: {
+      type: 'http',
+      chainType: 'l1',
+      // Public endpoint — not a secret, no signup, no API key.
+      url: 'https://ethereum-sepolia-rpc.publicnode.com',
+      accounts: [configVariable('SEPOLIA_PRIVATE_KEY')],
+    },
   },
-});
