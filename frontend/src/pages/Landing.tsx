@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { createPublicClient, http } from 'viem';
+import { sepolia } from 'viem/chains';
 import { motion, useReducedMotion } from 'motion/react';
 import { Reveal, RevealOnScroll, SPRING, useStage } from '../lib/motion';
 import { Decrypt, LiveCounter } from '../components/Decrypt';
-import { ADDRESSES } from '../config';
+import { ADDRESSES, STREAM_ABI } from '../config';
+
+// The stream this page illustrates. Its public fields (sender, recipient,
+// timing, and the encrypted handle itself) are fetched live from Sepolia
+// below — no wallet required, since those are not the secret. The deposit
+// and rate figures shown to an anonymous visitor are a worked example: this
+// page cannot and does not actually decrypt anyone's balance, since that
+// would defeat the entire point of the product. Try the real decrypt for
+// yourself as this stream's recipient in the app.
+const DEMO_STREAM_ID = 3n;
 
 /* ─────────────────────────────────────────────────────────
  * LANDING STORYBOARD
@@ -164,6 +175,25 @@ function VeilMark() {
 }
 
 /* ── The hero proof card ────────────────────────────────── */
+type LiveStream = {
+  sender: `0x${string}`;
+  recipient: `0x${string}`;
+  cancelled: boolean;
+  depleted: boolean;
+  depositHandle: `0x${string}`;
+};
+
+/**
+ * The public fields here — sender, recipient, status, and the encrypted
+ * handle itself — are fetched live from the deployed VEILStream on Sepolia.
+ * No wallet is required, because none of that is the secret.
+ *
+ * The deposit/withdrawable *figures* are a labeled worked example, not a
+ * live decrypt: an anonymous visitor is not this stream's recipient, so a
+ * real decrypt would (correctly) fail. Showing a fabricated "decrypted"
+ * number as if it resolved for this visitor would be dishonest and would
+ * also undercut the entire pitch — the ACL is what makes this private.
+ */
 function StreamCard({
   decrypted,
   onDecrypted,
@@ -171,27 +201,70 @@ function StreamCard({
   decrypted: boolean;
   onDecrypted: () => void;
 }) {
+  const [live, setLive] = useState<LiveStream | null>(null);
+  const [liveError, setLiveError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const client = createPublicClient({
+      chain: sepolia,
+      transport: http('https://ethereum-sepolia-rpc.publicnode.com'),
+    });
+    client
+      .readContract({
+        address: ADDRESSES.stream,
+        abi: STREAM_ABI,
+        functionName: 'getStream',
+        args: [DEMO_STREAM_ID],
+      })
+      .then((s) => {
+        if (cancelled) return;
+        const r = s as readonly any[];
+        setLive({
+          sender: r[0],
+          recipient: r[1],
+          cancelled: r[4],
+          depleted: r[5],
+          depositHandle: r[6],
+        });
+      })
+      .catch(() => !cancelled && setLiveError(true));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const status = live?.cancelled ? 'cancelled' : live?.depleted ? 'completed' : 'active';
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-2xl shadow-black/20">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-            Stream #3 · active
+            Stream #{DEMO_STREAM_ID.toString()} · {status}
           </p>
           <p className="mt-1 font-mono text-xs text-muted-foreground">
-            {short('0xce380437A4BeA077e8bf6909d8A3a43feBB1A3AA')} →{' '}
-            {short('0xd876C746A5fbFb26A202596900C969192dF846e0')}
+            {live
+              ? `${short(live.sender)} → ${short(live.recipient)}`
+              : liveError
+                ? 'Could not reach Sepolia'
+                : 'Loading from Sepolia…'}
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
-          public
-        </span>
+        <a
+          href={`${EXPLORER}/${ADDRESSES.stream}#readContract`}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          public ↗
+        </a>
       </div>
 
       <div className="my-6 h-px bg-border" />
 
       <p className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-        Deposit
+        Deposit <span className="normal-case text-muted-foreground/70">(worked example)</span>
       </p>
       <p className="mt-2 font-mono text-2xl tabular break-all">
         {decrypted ? (
@@ -214,7 +287,7 @@ function StreamCard({
       </p>
 
       <p className="mt-6 text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-        Withdrawable now
+        Withdrawable now <span className="normal-case text-muted-foreground/70">(example)</span>
       </p>
       <p className="mt-2 font-mono text-3xl tabular text-foreground">
         {decrypted ? (
@@ -229,16 +302,16 @@ function StreamCard({
 
       <div className="mt-6 rounded-md border border-border bg-background p-3">
         <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-          What the block explorer stores
+          What the block explorer actually stores — fetched live, right now
         </p>
         <p className="mt-1.5 font-mono text-[11px] leading-relaxed break-all text-muted-foreground">
-          0x0000aa36a72301563a43a85f1ffa007ac5d8d8895e2bbd0347089b62d721749f
+          {live?.depositHandle ?? (liveError ? '—' : 'fetching…')}
         </p>
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
         {decrypted
-          ? 'Decrypted in your browser. Nobody else can do this.'
+          ? "This page can't actually decrypt this for you — only the real recipient's wallet can. The figures above illustrate what that decrypt looks like."
           : 'Resolving through the Nox TEE…'}
       </p>
     </div>
