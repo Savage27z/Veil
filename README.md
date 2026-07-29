@@ -30,3 +30,12 @@ VEILStream — linear streams over cUSDC
      • cancel(streamId)     — vested part to recipient, encrypted refund to sender
 ```
 
+**Privacy model.** Stream timing is public by design (it's not the secret and it
+lets vesting branch on `block.timestamp` in plaintext). Amount handles carry a
+Nox ACL: contract + sender + recipient. `withdrawable()` is intentionally not an
+on-chain view — Nox ops are TEE-computed and non-view — so the frontend decrypts
+`deposit/rate/withdrawn` (allowed wallets only) and renders the live vested
+amount client-side.
+
+## Repo layout
+
