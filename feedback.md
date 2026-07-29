@@ -222,3 +222,13 @@ their contract design before they hit a limit.
 Calling `handleClient.decrypt()` immediately after the transaction that created
 the handle fails with:
 
+```
+Unexpected response from Handle Gateway (status: 403,
+  data: {"error":"access_denied","message":"Access denied: not a viewer"})
+```
+
+…even though the transaction succeeded and the contract *did* call
+`Nox.allow(handle, msg.sender)`. Waiting a few seconds and retrying resolves it
+every time. The gateway authorizes against indexed ACL state, which lags the
+chain by a few seconds.
+
