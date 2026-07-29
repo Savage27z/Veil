@@ -73,3 +73,13 @@ that returns a 32-byte handle, and no amount anywhere.
 
 ## Test status
 
+`npx hardhat test` — **5 passing** against the real local Nox stack (real
+encrypted handles, real TEE compute, no mocks):
+
+```
+✔ wraps USDC into cUSDC with an encrypted balance
+✔ creates a stream with encrypted deposit and derived rate
+✔ lets the recipient withdraw the vested amount mid-stream
+✔ pays out the full deposit after the stream ends and marks it depleted
+✔ cancel refunds the unstreamed remainder to the sender
+```
