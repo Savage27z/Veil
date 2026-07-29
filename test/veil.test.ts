@@ -35,4 +35,14 @@ describe('VEIL — private payment streams', () => {
     stream = await viem.deployContract('VEILStream', [vault.address]);
   });
 
+  it('wraps USDC into cUSDC with an encrypted balance', async () => {
+    await usdc.write.mint([sender, USDC(1000)]);
+    await usdc.write.approve([vault.address, USDC(1000)]);
+    await vault.write.wrap([sender, USDC(1000)]);
+
+    const handle = (await vault.read.confidentialBalanceOf([sender])) as `0x${string}`;
+    const { value } = await nox.decrypt(handle);
+    assert.equal(value, USDC(1000));
+  });
+
 });
