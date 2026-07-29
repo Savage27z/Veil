@@ -90,6 +90,10 @@ contract VEILStream {
 
         euint256 requested = Nox.fromExternal(encryptedDeposit, depositProof);
 
+        // The token contract computes on this handle inside the TEE, so it needs
+        // its own access — being the caller is not enough. Transient: scoped to
+        // this transaction, no permanent grant.
+        Nox.allowTransient(requested, address(token));
 
         // Pull the confidential deposit. All-or-nothing semantics: if the
         // sender's encrypted balance is insufficient, `deposit` is encrypted 0
@@ -142,6 +146,7 @@ contract VEILStream {
         euint256 vested = _vestedAmount(s);
         euint256 payableNow = Nox.sub(vested, s.withdrawn);
 
+        Nox.allowTransient(payableNow, address(token));
         token.confidentialTransfer(s.recipient, payableNow);
 
         s.withdrawn = vested;
@@ -169,6 +174,8 @@ contract VEILStream {
         euint256 dueRecipient = Nox.sub(vested, s.withdrawn);
         euint256 refund = Nox.sub(s.deposit, vested);
 
+        Nox.allowTransient(dueRecipient, address(token));
+        Nox.allowTransient(refund, address(token));
         token.confidentialTransfer(s.recipient, dueRecipient);
         token.confidentialTransfer(s.sender, refund);
 
