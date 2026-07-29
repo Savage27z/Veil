@@ -47,3 +47,10 @@ amount client-side.
 
 ## Run it
 
+```bash
+npm install
+npx hardhat test                 # needs Docker running (local Nox TEE stack)
+npx hardhat run scripts/deploy.ts --network sepolia
+cd frontend && npm install && npm run dev
+```
+
