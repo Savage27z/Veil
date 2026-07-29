@@ -45,4 +45,36 @@ describe('VEIL — private payment streams', () => {
     assert.equal(value, USDC(1000));
   });
 
+  it('creates a stream with encrypted deposit and derived rate', async () => {
+    // Allow VEILStream to pull the confidential deposit.
+    const until = BigInt(Math.floor(Date.now() / 1000) + 3600 * 24 * 365);
+    await vault.write.setOperator([stream.address, until]);
+
+    const now = BigInt(await networkHelpers.time.latest());
+    const start = now + 100n;
+    const end = start + 600n; // 600s → rate = 1 USDC/s for a 600 USDC deposit
+
+    const { handle, handleProof } = await nox.encryptInput(
+      USDC(600),
+      'uint256',
+      stream.address,
+    );
+    await stream.write.createStream([recipient, handle, handleProof, start, end]);
+
+    const s = (await stream.read.getStream([1n])) as any[];
+    assert.equal(s[0].toLowerCase(), sender.toLowerCase());
+    assert.equal(s[1].toLowerCase(), recipient.toLowerCase());
+    assert.equal(s[2], Number(start));
+    assert.equal(s[3], Number(end));
+
+    // Sender can decrypt deposit / rate / withdrawn.
+    assert.equal((await nox.decrypt(s[6])).value, USDC(600));
+    assert.equal((await nox.decrypt(s[7])).value, USDC(1)); // 1 USDC per second
+    assert.equal((await nox.decrypt(s[8])).value, 0n);
+
+    // Sender's vault balance dropped by the deposit.
+    const bal = (await vault.read.confidentialBalanceOf([sender])) as `0x${string}`;
+    assert.equal((await nox.decrypt(bal)).value, USDC(400));
+  });
+
 });
