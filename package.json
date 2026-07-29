@@ -4,11 +4,23 @@
   "description": "VEIL — private payment streams on iExec Nox",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "smoke:sepolia": "hardhat run scripts/smoke.ts --network sepolia",
+    "demo:setup": "hardhat run scripts/demo-setup.ts --network sepolia",
+    "demo:status": "hardhat run scripts/demo-status.ts --network sepolia"
   },
-  "keywords": [],
+  "keywords": [
+    "nox",
+    "iexec",
+    "confidential",
+    "erc7984",
+    "streaming",
+    "privacy"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "@iexec-nox/nox-hardhat-plugin": "^0.1.0",
