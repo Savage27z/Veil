@@ -128,3 +128,15 @@ Unable to decode signature "0xb87a12a9" as it was not found on the provided ABI.
 `0xb87a12a9` is `NotAllowed(bytes32 handle, address account)` from
 `nox-protocol-contracts`. Two separate problems, both worth fixing:
 
+**1. The error doesn't reach the developer.** It's defined in the Nox library,
+not in the user's contract, so viem can't decode it against the deployed ABI —
+you get a raw selector. Every Nox developer will hit `NotAllowed` (it's *the*
+ACL failure), so it deserves either re-export in the ABIs the plugin surfaces,
+or a decoder in the Hardhat plugin that recognizes protocol selectors and
+prints `NotAllowed(handle 0x…, account 0x…)`. We had to hand-compute
+`keccak256("NotAllowed(bytes32,address)")` to identify it.
+
+**2. The actual rule is under-documented — and it is not intuitive.** Passing an
+encrypted handle to *another contract* requires granting **that contract**
+access, even though it's the callee and you are the authorized caller:
+
