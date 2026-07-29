@@ -39,3 +39,11 @@ amount client-side.
 
 ## Repo layout
 
+- `contracts/` — `MockUSDC.sol`, `HiddenVault.sol`, `VEILStream.sol`
+- `test/veil.test.ts` — end-to-end against the real local Nox stack (Docker)
+- `scripts/deploy.ts` — deployment
+- `frontend/` — minimal Vite/React dApp (connect, wrap, create, decrypt, withdraw)
+- `feedback.md` — Nox DX log, written during the build
+
+## Run it
+
