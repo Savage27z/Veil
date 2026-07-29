@@ -34,3 +34,17 @@ chronological order. Raw friction log, not a polished retrospective.
 
 ## Day 1 — Contracts
 
+### Docs vs. published code mismatches
+
+- **The ERC-20→ERC-7984 wrapper docs show the wrong constructor.** The guide
+  (`/guides/build-confidential-tokens/erc20-to-erc7984-wrapper`) shows
+  `ERC20ToERC7984Wrapper(usdc)` + separate `ERC7984("name","symbol","")` call,
+  but the published contract (`@iexec-nox/nox-confidential-contracts@0.2.2`)
+  takes everything in one constructor:
+  `ERC20ToERC7984Wrapper(name, symbol, contractURI, underlying)`. Copy-pasting
+  the docs example does not compile.
+- The Solidity library docs say `pragma ^0.8.0` is enough as a prerequisite,
+  but `Nox.sol` in `nox-protocol-contracts@0.2.4` is `pragma ^0.8.35` — a
+  compiler pinned in the last few months. Worth stating loudly since 0.8.35 is
+  newer than what most tutorials/toolchains default to.
+
