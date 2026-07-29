@@ -205,3 +205,15 @@ Worth recording because every Nox team deploying to Sepolia will meet it:
 
 ### Hosted stack: worked first try
 
+`scripts/smoke.ts` runs the full flow against **deployed Sepolia contracts and
+the hosted Nox gateway/TEE** (no Docker): mint → wrap → decrypt balance →
+`encryptInput` → `createStream` → decrypt deposit and rate. It passed on the
+first attempt with no code changes from the local-stack version.
+
+The one thing worth noting for other teams: `createStream` cost **613k gas**.
+Confidential ops are materially more expensive than plaintext equivalents
+(each Nox operation emits events for the off-chain Runner), so anything doing
+several encrypted operations in one call needs a gas-limit sanity check. A
+rough "gas cost per Nox primitive" table in the docs would help teams budget
+their contract design before they hit a limit.
+
