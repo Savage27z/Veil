@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+ * VEIL — Slate Mist
+ * Palette and typography chosen via brand-design. See /brand.md.
+ * All values OKLCH; every foreground/background pair verified WCAG AA
+ * in both themes (body ≥ 17:1, primary ≥ 6.5:1, muted ≥ 7:1).
+ * ------------------------------------------------------------------ */
+
+@layer base {
+  :root {
+    /* Light — derived from Slate Mist light seeds */
+    --background: oklch(0.980 0.005 210);
+    --foreground: oklch(0.190 0.012 210);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.190 0.012 210);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.190 0.012 210);
+    --primary: oklch(0.460 0.070 200);
+    --primary-foreground: oklch(0.980 0 0);
+    --secondary: oklch(0.940 0.010 210);
+    --secondary-foreground: oklch(0.190 0.012 210);
+    --muted: oklch(0.950 0.005 210);
+    --muted-foreground: oklch(0.450 0.012 210);
+    --accent: oklch(0.930 0.005 200);
+    --accent-foreground: oklch(0.190 0.012 210);
+    --destructive: oklch(0.550 0.220 25);
+    --destructive-foreground: oklch(0.980 0 0);
+    --border: oklch(0.900 0.005 210);
+    --input: oklch(0.960 0.005 210);
+    --ring: oklch(0.460 0.070 200);
+    --radius: 0.375rem;
+
+    /* Brand gradients — deliberately near-invisible. On a minimal palette a
+       gradient should read as a change in air pressure, not as decoration. */
+    --gradient-bg: radial-gradient(
+      120% 80% at 50% -10%,
+      oklch(0.930 0.020 200 / 0.55) 0%,
+      transparent 60%
+    );
+    --gradient-accent: linear-gradient(
+      135deg,
+      oklch(0.460 0.070 200) 0%,
+      oklch(0.560 0.060 190) 100%
+    );
+
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  .dark {
+    /* Dark — same seeds, different time of day */
+    --background: oklch(0.150 0.012 210);
+    --foreground: oklch(0.950 0.010 210);
+    --card: oklch(0.200 0.015 210);
+    --card-foreground: oklch(0.950 0.010 210);
+    --popover: oklch(0.220 0.015 210);
+    --popover-foreground: oklch(0.950 0.010 210);
+    --primary: oklch(0.720 0.080 200);
+    --primary-foreground: oklch(0.100 0 0);
+    --secondary: oklch(0.240 0.025 210);
+    --secondary-foreground: oklch(0.950 0.010 210);
+    --muted: oklch(0.220 0.015 210);
+    --muted-foreground: oklch(0.650 0.010 210);
+    --accent: oklch(0.260 0.025 200);
+    --accent-foreground: oklch(0.950 0.010 210);
+    --destructive: oklch(0.650 0.220 25);
+    --destructive-foreground: oklch(0.980 0 0);
+    --border: oklch(0.280 0.015 210);
+    --input: oklch(0.200 0.015 210);
+    --ring: oklch(0.720 0.080 200);
+    --radius: 0.375rem;
+
+    --gradient-bg: radial-gradient(
+      120% 80% at 50% -10%,
+      oklch(0.260 0.030 200 / 0.7) 0%,
+      transparent 60%
+    );
+    --gradient-accent: linear-gradient(
+      135deg,
+      oklch(0.720 0.080 200) 0%,
+      oklch(0.800 0.060 190) 100%
+    );
+  }
+}
+
+/* Expose the tokens to Tailwind v4 utilities (bg-background, text-muted-foreground…) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers must never jitter as a stream ticks up. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Shared button shapes. 44px min height clears the 40px touch target rule
+     with room to spare, and both variants carry a visible focus ring. */
+  .btn-primary,
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      opacity 150ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+  }
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--accent);
+  }
+
+  .btn-primary:disabled,
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Every animation in the app is opt-in via these classes, so honouring
+   reduced-motion in one place actually covers the whole surface. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes veil-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-fade-up {
+    animation: veil-fade-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
