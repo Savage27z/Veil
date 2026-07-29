@@ -89,3 +89,30 @@ chronological order. Raw friction log, not a polished retrospective.
 
 - When the offchain stack fails to come up, the plugin reports literally:
 
+  ```
+  Error: [nox] Failed to start the offchain stack:
+  [object Object]
+  ```
+
+  The cause is `offchain-services.ts` doing `` `...${String(error)}` `` on the
+  error thrown by the `docker-compose` npm package, which rejects with a
+  **result object** (`{ exitCode, out, err }`), not an `Error`. `String()` on it
+  yields `[object Object]` and the real message is lost. A one-line fix
+  (`error?.err ?? error?.message ?? JSON.stringify(error)`) would turn a
+  dead-end into a diagnosis.
+- The companion `offchain-services.log` was written **empty** (0 bytes) on that
+  failure, because `docker compose logs` has nothing to report when the
+  containers never got created — so both diagnostic channels came up blank at
+  exactly the moment they were needed.
+- Recovering the real error meant running the plugin's bundled compose file by
+  hand:
+  `docker compose --env-file dev.env up --wait` inside
+  `node_modules/@iexec-nox/nox-hardhat-plugin/offchain-services/`. That's a
+  useful escape hatch and deserves to be a documented debugging step.
+- The actual failure turned out to be a transient registry error mid-pull
+  (`failed to copy: httpReadSeeker: ... TLS handshake timeout`) while fetching
+  the offchain images. The images are large and pulled on first `hardhat test`;
+  a flaky network turns that into an opaque plugin crash. Suggestions: pull with
+  retries, or expose a `hardhat nox:pull` / `nox:up` task so image fetching is a
+  separate, resumable step from running tests.
+
