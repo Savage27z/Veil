@@ -14,3 +14,12 @@ export const USDC_ABI = [
   { type: 'function', name: 'allowance', stateMutability: 'view', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ type: 'uint256' }] },
 ] as const;
 
+export const VAULT_ABI = [
+  { type: 'function', name: 'wrap', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bytes32' }] },
+  { type: 'function', name: 'unwrap', stateMutability: 'nonpayable', inputs: [{ name: 'from', type: 'address' }, { name: 'to', type: 'address' }, { name: 'encryptedAmount', type: 'bytes32' }, { name: 'inputProof', type: 'bytes' }], outputs: [{ type: 'bytes32' }] },
+  { type: 'function', name: 'finalizeUnwrap', stateMutability: 'nonpayable', inputs: [{ name: 'unwrapRequestId', type: 'bytes32' }, { name: 'decryptedAmountAndProof', type: 'bytes' }], outputs: [] },
+  { type: 'function', name: 'confidentialBalanceOf', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'bytes32' }] },
+  { type: 'function', name: 'setOperator', stateMutability: 'nonpayable', inputs: [{ name: 'operator', type: 'address' }, { name: 'until', type: 'uint48' }], outputs: [] },
+  { type: 'function', name: 'isOperator', stateMutability: 'view', inputs: [{ name: 'holder', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ type: 'bool' }] },
+] as const;
+
