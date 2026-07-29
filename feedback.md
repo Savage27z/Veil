@@ -173,3 +173,16 @@ encrypted handles, real TEE compute, no mocks. Wrap, stream creation with
 TEE-derived rate, mid-stream withdrawal, post-expiry payout, and cancel-refund
 all verified by decrypting handles and asserting on cleartext.
 
+## Day 1 — Sepolia deployment
+
+- **The in-library NoxCompute resolution paid off exactly as advertised.**
+  Deploying to Sepolia needed *zero* Nox-specific configuration — no addresses,
+  no gateway URL, no registry wiring in `hardhat.config.ts`. The same contracts
+  that ran against the local Docker stack deployed unchanged. This is a real
+  strength and worth advertising more loudly in the docs.
+- Deployment cost was trivial (~0.008 ETH total for three contracts including a
+  full ERC-7984 implementation).
+- **Verification worked with no API key**, via Blockscout and Sourcify, which is
+  a genuinely nice default for hackathon teams who'd otherwise have to register
+  for an Etherscan key mid-build.
+
