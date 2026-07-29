@@ -120,3 +120,11 @@ chronological order. Raw friction log, not a polished retrospective.
 
 Once the stack was up, every stream test failed with a bare, undecodable revert:
 
+```
+reverted with an unrecognized custom error (return data: 0xb87a12a9…)
+Unable to decode signature "0xb87a12a9" as it was not found on the provided ABI.
+```
+
+`0xb87a12a9` is `NotAllowed(bytes32 handle, address account)` from
+`nox-protocol-contracts`. Two separate problems, both worth fixing:
+
