@@ -28,3 +28,9 @@ chronological order. Raw friction log, not a polished retrospective.
 
 ### Ecosystem naming
 
+- Searching npm for "nox" surfaces a dozen unrelated packages (`@noxfed/nox-pro`,
+  `nox-mem`, a mixnet SDK...). The `@iexec-nox` scope is the only reliable
+  filter; docs should always show scoped install commands (they do — good).
+
+## Day 1 — Contracts
+
