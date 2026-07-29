@@ -59,3 +59,16 @@ chronological order. Raw friction log, not a polished retrospective.
 - `.md`-suffixed docs URLs + `llms.txt` made AI-assisted development genuinely
   smooth.
 
+### API gaps we worked around
+
+- **No plaintext×ciphertext arithmetic.** `Nox.mul(euint256, euint256)` only —
+  every public scalar (elapsed seconds) must be lifted with `Nox.toEuint256()`
+  first. Fine, but an overload would save a handle per operation (and gateway
+  round-trips).
+- **`withdrawable()` can't be a `view`.** Nox ops emit events for the TEE, so
+  computing "how much can I withdraw" on-chain requires a state-changing tx.
+  Pattern we settled on: grant the recipient ACL access to `deposit`/`rate`/
+  `withdrawn` and compute the display value client-side after `decrypt()`. Docs
+  could document this pattern explicitly — every streaming/vesting app will hit
+  it.
+
