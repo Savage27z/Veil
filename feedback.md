@@ -166,3 +166,10 @@ one.
 We needed it in three places (`createStream` → `confidentialTransferFrom`,
 `withdraw` and `cancel` → `confidentialTransfer`). After that: 5/5 green.
 
+### Result
+
+`npx hardhat test` — **5 passing**, against the real local Nox stack: real
+encrypted handles, real TEE compute, no mocks. Wrap, stream creation with
+TEE-derived rate, mid-stream withdrawal, post-expiry payout, and cancel-refund
+all verified by decrypting handles and asserting on cleartext.
+
