@@ -85,3 +85,7 @@ chronological order. Raw friction log, not a polished retrospective.
   tests against the hosted Sepolia stack directly (`skipTestOverride` +
   documented wiring) so Docker isn't a hard requirement.
 
+### Plugin error reporting swallows the actual failure
+
+- When the offchain stack fails to come up, the plugin reports literally:
+
