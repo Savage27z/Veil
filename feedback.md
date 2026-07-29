@@ -48,3 +48,14 @@ chronological order. Raw friction log, not a polished retrospective.
   compiler pinned in the last few months. Worth stating loudly since 0.8.35 is
   newer than what most tutorials/toolchains default to.
 
+### Very good decisions worth calling out
+
+- NoxCompute addresses are resolved **in-library by `block.chainid`**
+  (`Nox.noxComputeContract()`), CREATE2-deterministic. Zero network config to
+  deploy on Sepolia. This is how it should be everywhere.
+- The all-or-nothing `Nox.transfer/mint/burn` semantics (never revert, encrypted
+  `success` flag) elegantly kill the "insufficient balance" binary oracle — we
+  leaned on it directly for stream creation.
+- `.md`-suffixed docs URLs + `llms.txt` made AI-assisted development genuinely
+  smooth.
+
