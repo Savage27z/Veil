@@ -13,3 +13,9 @@ frontend/dist/
 
 # local run logs
 *.log
+
+# brand preview artifact
+.brand-preview/
+
+# build output
+frontend/dist/
