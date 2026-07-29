@@ -110,4 +110,34 @@ describe('VEIL — private payment streams', () => {
     assert.equal(after[5], true); // depleted
   });
 
+  it('cancel refunds the unstreamed remainder to the sender', async () => {
+    const now = BigInt(await networkHelpers.time.latest());
+    const start = now + 50n;
+    const end = start + 400n; // 400 USDC over 400s → 1 USDC/s
+
+    const { handle, handleProof } = await nox.encryptInput(
+      USDC(400),
+      'uint256',
+      stream.address,
+    );
+    await stream.write.createStream([recipient, handle, handleProof, start, end]);
+
+    const balBefore = (await nox.decrypt(
+      (await vault.read.confidentialBalanceOf([sender])) as `0x${string}`,
+    )).value as bigint;
+
+    await networkHelpers.time.increaseTo(start + 100n);
+    await stream.write.cancel([2n]);
+
+    const s = (await stream.read.getStream([2n])) as any[];
+    assert.equal(s[4], true); // cancelled
+    const vested = (await nox.decrypt(s[8])).value as bigint;
+    assert.ok(vested >= USDC(100) && vested <= USDC(102), `vested=${vested}`);
+
+    const balAfter = (await nox.decrypt(
+      (await vault.read.confidentialBalanceOf([sender])) as `0x${string}`,
+    )).value as bigint;
+    // Refund = deposit - vested.
+    assert.equal(balAfter - balBefore, USDC(400) - vested);
+  });
 });
