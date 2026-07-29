@@ -153,3 +153,16 @@ computes on the handle inside the TEE under *its own* identity. So the
 permission you obviously have is not the permission you need, and the error
 surfaces from a different contract than the one you called.
 
+The `allowTransient` reference says it's for "passing handles to another
+contract within the same transaction," which is correct but reads as an
+optimization ("without giving permanent access") rather than a hard requirement
+for cross-contract calls. Suggested docs fix: a short "Calling another
+confidential contract" section stating the rule as
+*grant the callee transient access to every handle you pass it*, with this exact
+`NotAllowed` symptom named so it's searchable. Any protocol composing with
+ERC-7984 tokens — i.e. the entire "confidential DeFi" pitch — hits this on day
+one.
+
+We needed it in three places (`createStream` → `confidentialTransferFrom`,
+`withdraw` and `cancel` → `confidentialTransfer`). After that: 5/5 green.
+
