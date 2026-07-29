@@ -129,4 +129,115 @@ contract VEILStream {
         emit StreamCreated(streamId, msg.sender, recipient, startTime, endTime);
     }
 
+    /// @notice Withdraw everything vested so far. Amount is computed on
+    /// ciphertext in the TEE and transferred confidentially — no amount ever
+    /// appears on-chain.
+    function withdraw(uint256 streamId) external {
+        Stream storage s = _streams[streamId];
+        if (s.sender == address(0)) revert StreamNotFound(streamId);
+        if (msg.sender != s.recipient) revert NotRecipient(streamId);
+        if (s.cancelled || s.depleted) revert StreamInactive(streamId);
+        if (block.timestamp <= s.startTime) revert StreamNotStarted(streamId);
+
+        euint256 vested = _vestedAmount(s);
+        euint256 payableNow = Nox.sub(vested, s.withdrawn);
+
+        token.confidentialTransfer(s.recipient, payableNow);
+
+        s.withdrawn = vested;
+        Nox.allowThis(vested);
+        Nox.allow(vested, s.sender);
+        Nox.allow(vested, s.recipient);
+
+        if (block.timestamp >= s.endTime) {
+            // Everything is vested and withdrawn; stream is finished.
+            s.depleted = true;
+        }
+
+        emit StreamWithdrawn(streamId, s.recipient);
+    }
+
+    /// @notice Cancel a stream. The recipient is paid what has vested so far;
+    /// the sender is refunded the rest. Both transfers are confidential.
+    function cancel(uint256 streamId) external {
+        Stream storage s = _streams[streamId];
+        if (s.sender == address(0)) revert StreamNotFound(streamId);
+        if (msg.sender != s.sender) revert NotSender(streamId);
+        if (s.cancelled || s.depleted) revert StreamInactive(streamId);
+
+        euint256 vested = _vestedAmount(s);
+        euint256 dueRecipient = Nox.sub(vested, s.withdrawn);
+        euint256 refund = Nox.sub(s.deposit, vested);
+
+        token.confidentialTransfer(s.recipient, dueRecipient);
+        token.confidentialTransfer(s.sender, refund);
+
+        s.withdrawn = vested;
+        s.cancelled = true;
+        Nox.allowThis(vested);
+        Nox.allow(vested, s.sender);
+        Nox.allow(vested, s.recipient);
+
+        emit StreamCancelled(streamId, s.sender);
+    }
+
+    // ============ Views ============
+
+    function getStream(
+        uint256 streamId
+    )
+        external
+        view
+        returns (
+            address sender,
+            address recipient,
+            uint40 startTime,
+            uint40 endTime,
+            bool cancelled,
+            bool depleted,
+            euint256 deposit,
+            euint256 ratePerSecond,
+            euint256 withdrawn
+        )
+    {
+        Stream storage s = _streams[streamId];
+        if (s.sender == address(0)) revert StreamNotFound(streamId);
+        return (
+            s.sender,
+            s.recipient,
+            s.startTime,
+            s.endTime,
+            s.cancelled,
+            s.depleted,
+            s.deposit,
+            s.ratePerSecond,
+            s.withdrawn
+        );
+    }
+
+    function streamsSentBy(address account) external view returns (uint256[] memory) {
+        return _sent[account];
+    }
+
+    function streamsReceivedBy(address account) external view returns (uint256[] memory) {
+        return _received[account];
+    }
+
+    // ============ Internal ============
+
+    /// @dev Encrypted vested amount at the current timestamp. Branching on time
+    /// is done in plaintext (timing is public by design); branching on amounts
+    /// is done with Nox.select on ciphertext.
+    function _vestedAmount(Stream storage s) internal returns (euint256) {
+        if (block.timestamp >= s.endTime) {
+            // Fully vested: pay the exact deposit, absorbing integer-division
+            // dust from the rate computation.
+            return s.deposit;
+        }
+        uint256 elapsed = block.timestamp > s.startTime ? block.timestamp - s.startTime : 0;
+        euint256 streamed = Nox.mul(s.ratePerSecond, Nox.toEuint256(elapsed));
+        // min(streamed, deposit) — guards rounding edge cases without leaking.
+        ebool overDeposit = Nox.gt(streamed, s.deposit);
+        return Nox.select(overDeposit, s.deposit, streamed);
+    }
 }
