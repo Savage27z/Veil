@@ -246,3 +246,9 @@ Two suggestions:
    SDK directly — i.e. every frontend — has to rediscover this and write their
    own backoff. Ours is in `scripts/demo-status.ts`.
 
+Note the asymmetry that makes this bite harder in production than in tests: with
+the Hardhat plugin you never see it, because `nox.decrypt` wraps the retry. Move
+the identical code to a real network with the raw SDK and it breaks. Test-passing
+code that fails on the deployed chain is the worst possible failure shape.
+
+*(end of log — build complete)*
