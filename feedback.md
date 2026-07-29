@@ -140,3 +140,16 @@ prints `NotAllowed(handle 0x…, account 0x…)`. We had to hand-compute
 encrypted handle to *another contract* requires granting **that contract**
 access, even though it's the callee and you are the authorized caller:
 
+```solidity
+euint256 requested = Nox.fromExternal(encryptedDeposit, depositProof);
+Nox.allowTransient(requested, address(token));   // ← without this: NotAllowed
+token.confidentialTransferFrom(msg.sender, address(this), requested);
+```
+
+What makes this a trap: `ERC7984Base` *does* check
+`Nox.isAllowed(amount, msg.sender)` and that check **passes** — we created the
+handle, so we're allowed. The revert comes later, when the token contract
+computes on the handle inside the TEE under *its own* identity. So the
+permission you obviously have is not the permission you need, and the error
+surfaces from a different contract than the one you called.
+
