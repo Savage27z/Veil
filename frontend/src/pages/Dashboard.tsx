@@ -76,6 +76,11 @@ export default function Dashboard() {
   const [cusdcBal, setCusdcBal] = useState<bigint | null>(null);
   const [streams, setStreams] = useState<StreamView[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Why a decrypt failed, if it did. Swallowing this into a silent "••••" made
+  // "you aren't authorized" indistinguishable from "the gateway is down" or
+  // "you dismissed the signature prompt" — which is exactly the distinction
+  // you need when a balance you own won't resolve.
+  const [decryptError, setDecryptError] = useState<string | null>(null);
 
   // All contract reads go through a real RPC node rather than the injected
   // wallet provider. Injected providers are for signing; their eth_call
@@ -165,13 +170,23 @@ export default function Dashboard() {
   const tryDecrypt = useCallback(
     async (handle: `0x${string}`): Promise<bigint | null> => {
       if (!handleClient || handle === ZERO_HANDLE) return null;
-      for (let attempt = 1; attempt <= 4; attempt++) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           const { value } = await handleClient.decrypt(handle);
           return value as bigint;
-        } catch {
-          if (attempt === 4) return null;
-          await new Promise((r) => setTimeout(r, attempt * 500));
+        } catch (e: any) {
+          const msg: string = e?.message ?? String(e);
+          // "not authorized" is a permanent on-chain ACL answer and a rejected
+          // signature is a deliberate user action — retrying either just burns
+          // time and, for the signature, re-prompts the wallet. Only the
+          // gateway's ACL-indexing lag is worth waiting out.
+          const permanent =
+            /not authorized|does not exist|rejected|denied by the user|User rejected/i.test(msg);
+          if (permanent || attempt === 3) {
+            setDecryptError(msg.slice(0, 300));
+            return null;
+          }
+          await new Promise((r) => setTimeout(r, attempt * 600));
         }
       }
       return null;
@@ -183,6 +198,7 @@ export default function Dashboard() {
     if (!account || !handleClient) return;
     setLoading(true);
     setLoadError(null);
+    setDecryptError(null);
     try {
       const [uBal, cHandle, sentIds, recvIds] = await Promise.all([
         publicClient.readContract({
@@ -358,6 +374,19 @@ export default function Dashboard() {
           <ConnectPrompt onConnect={connect} />
         ) : (
           <>
+            {decryptError && (
+              <div className="mb-4 rounded-xl border border-destructive/40 bg-card p-4">
+                <p className="text-sm font-medium">Could not decrypt your values</p>
+                <p className="mt-1.5 font-mono text-xs leading-relaxed break-all text-muted-foreground">
+                  {decryptError}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Amounts show as •••• until this resolves. If you dismissed a
+                  wallet signature prompt, hit Refresh and approve it.
+                </p>
+              </div>
+            )}
+
             <Reveal show={stage >= 1} offsetY={-10} spring={SPRING.stiff}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <BalanceCard
