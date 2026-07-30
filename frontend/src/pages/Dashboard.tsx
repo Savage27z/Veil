@@ -20,6 +20,7 @@ import { ADDRESSES, SEPOLIA_CHAIN_ID, STREAM_ABI, USDC_ABI, VAULT_ABI } from '..
 const TIMING = [100, 250, 400];
 
 const EXPLORER = 'https://eth-sepolia.blockscout.com';
+const SEPOLIA_RPC = 'https://ethereum-sepolia-rpc.publicnode.com';
 const ZERO_HANDLE = `0x${'0'.repeat(64)}`;
 
 type StreamView = {
@@ -76,18 +77,42 @@ export default function Dashboard() {
   const [streams, setStreams] = useState<StreamView[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Reads fall back to a public RPC so the page still works — and still
-  // renders — for anyone browsing without a wallet extension installed.
+  // All contract reads go through a real RPC node rather than the injected
+  // wallet provider. Injected providers are for signing; their eth_call
+  // support is inconsistent across wallets and networks, and routing reads
+  // through them is what broke the Nox SDK in production (see below).
   const publicClient = useMemo(
-    () =>
-      createPublicClient({
-        chain: sepolia,
-        transport: hasWallet()
-          ? custom((window as any).ethereum)
-          : http('https://ethereum-sepolia-rpc.publicnode.com'),
-      }),
+    () => createPublicClient({ chain: sepolia, transport: http(SEPOLIA_RPC) }),
     [],
   );
+
+  // The wallet client handed to the Nox SDK deliberately uses an http()
+  // transport, not custom(window.ethereum).
+  //
+  // createViemHandleClient() calls readContract() by taking whatever client it
+  // is given and doing `client.extend(publicActions)` — so with an injected
+  // transport, its startup gateway() lookup against the NoxCompute registry is
+  // dispatched as an eth_call through MetaMask. That call failed in production
+  // with "Failed to read contract at 0x24ef36ec… (method: gateway)", even
+  // though the exact same call succeeds against a plain RPC node.
+  //
+  // Signing is unaffected: the SDK only ever needs signTypedData from this
+  // client, and viem routes that to `account`, which is still the connected
+  // MetaMask account. So the wallet still owns every signature; only the
+  // reads take a path that reliably works.
+  const noxWalletClient = useMemo(
+    () =>
+      account
+        ? createWalletClient({
+            chain: sepolia,
+            transport: http(SEPOLIA_RPC),
+            account,
+          })
+        : null,
+    [account],
+  );
+
+  // Transactions must go through the injected provider — MetaMask holds the key.
   const walletClient = useMemo(
     () =>
       account && hasWallet()
@@ -124,11 +149,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!walletClient) return;
-    createViemHandleClient(walletClient)
+    if (!noxWalletClient) return;
+    createViemHandleClient(noxWalletClient)
       .then(setHandleClient)
       .catch((e) => setStatus({ kind: 'err', msg: `Nox SDK failed to start: ${e.message}` }));
-  }, [walletClient]);
+  }, [noxWalletClient]);
 
   /* ── reads ──────────────────────────────────────────── */
   // Every handle passed in here belongs to a stream/balance this account is
