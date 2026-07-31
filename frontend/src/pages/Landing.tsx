@@ -14,7 +14,11 @@ import { ADDRESSES, STREAM_ABI } from '../config';
 // page cannot and does not actually decrypt anyone's balance, since that
 // would defeat the entire point of the product. Try the real decrypt for
 // yourself as this stream's recipient in the app.
-const DEMO_STREAM_ID = 3n;
+// Point this at a stream that is still inside its window. A finished stream
+// still reports cancelled=false/depleted=false, so the card would label an
+// expired stream "active" — technically what the contract says, but it reads
+// as stale. Stream #4 runs until 2026-08-06.
+const DEMO_STREAM_ID = 4n;
 
 /* ─────────────────────────────────────────────────────────
  * LANDING STORYBOARD
@@ -273,11 +277,11 @@ function StreamCard({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            864.00 <span className="text-base text-muted-foreground">cUSDC</span>
+            604.80 <span className="text-base text-muted-foreground">cUSDC</span>
           </motion.span>
         ) : (
           <Decrypt
-            value="864.00"
+            value="604.80"
             hold={900}
             reveal={700}
             onDone={onDecrypted}
@@ -292,7 +296,7 @@ function StreamCard({
       <p className="mt-2 font-mono text-3xl tabular text-foreground">
         {decrypted ? (
           <>
-            <LiveCounter startValue={37.66} ratePerSecond={0.01} />
+            <LiveCounter startValue={43.2} ratePerSecond={0.001} decimals={3} />
             <span className="ml-2 text-base text-muted-foreground">cUSDC</span>
           </>
         ) : (
