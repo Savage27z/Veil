@@ -26,18 +26,17 @@ const DEMO_STREAM_ID = 4n;
  * Nav is static — never held blank, never re-animates.
  *
  *    0ms   nav + hero copy present (no blocking on motion)
- *  120ms   eyebrow fades in
- *  260ms   headline slides up
- *  420ms   subhead slides up
- *  580ms   CTAs slide up
- *  760ms   proof card slides in from right
- *  900ms   ciphertext begins churning inside the card
- * 1800ms   the amount resolves — only then does it read as money
+ *  120ms   headline slides up
+ *  280ms   subhead slides up
+ *  440ms   CTAs slide up
+ *  620ms   proof card slides in from right
+ *  760ms   ciphertext begins churning inside the card
+ * 1660ms   the amount resolves — only then does it read as money
  *
  * Everything below the fold reveals on scroll, once.
  * ───────────────────────────────────────────────────────── */
 
-const TIMING = [120, 260, 420, 580, 760];
+const TIMING = [120, 280, 440, 620];
 
 const EXPLORER = 'https://eth-sepolia.blockscout.com/address';
 
@@ -61,17 +60,7 @@ export default function Landing() {
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-6 pt-16 pb-24 md:pt-24 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-16">
           <div>
-            <Reveal show={stage >= 1} offsetY={8} spring={SPRING.stiff}>
-              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 motion-safe:animate-ping" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-                </span>
-                Live on Ethereum Sepolia
-              </p>
-            </Reveal>
-
-            <Reveal show={stage >= 2} offsetY={18} spring={SPRING.bouncy}>
+            <Reveal show={stage >= 1} offsetY={18} spring={SPRING.bouncy}>
               <h1 className="font-serif text-5xl leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
                 Nobody sees
                 <br />
@@ -79,7 +68,7 @@ export default function Landing() {
               </h1>
             </Reveal>
 
-            <Reveal show={stage >= 3} offsetY={16}>
+            <Reveal show={stage >= 2} offsetY={16}>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
                 VEIL is Sablier-style token streaming where the deposit and rate
                 are encrypted end to end through the{' '}
@@ -96,7 +85,7 @@ export default function Landing() {
               </p>
             </Reveal>
 
-            <Reveal show={stage >= 4} offsetY={14}>
+            <Reveal show={stage >= 3} offsetY={14}>
               <div className="mt-9 flex flex-wrap items-center gap-3">
                 <Link
                   to="/app"
@@ -119,7 +108,7 @@ export default function Landing() {
             </Reveal>
           </div>
 
-          <Reveal show={stage >= 5} offsetX={24} offsetY={0} spring={SPRING.smooth}>
+          <Reveal show={stage >= 4} offsetX={24} offsetY={0} spring={SPRING.smooth}>
             <StreamCard decrypted={decrypted} onDecrypted={() => setDecrypted(true)} />
           </Reveal>
         </div>
